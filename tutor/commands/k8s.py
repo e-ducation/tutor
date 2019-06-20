@@ -17,9 +17,14 @@ def k8s():
 @click.command(help="Configure and run Open edX from scratch")
 @opts.root
 @click.option("-I", "--non-interactive", is_flag=True, help="Run non-interactively")
-def quickstart(root, non_interactive):
+@click.option("-n", "--namespace", help="namespace")
+@click.option("-i", "--id", help="id")
+def quickstart(root, non_interactive, namespace, id):
+    click.echo('%s %s' % (namespace, id))
     click.echo(fmt.title("Interactive platform configuration"))
     config = interactive_config.update(root, interactive=(not non_interactive))
+    config['K8S_NAMESPACE'] = namespace
+    config['ID'] = id
     if config["ACTIVATE_HTTPS"] and not config["WEB_PROXY"]:
         fmt.echo_alert(
             "Potentially invalid configuration: ACTIVATE_HTTPS=true WEB_PROXY=false\n"
