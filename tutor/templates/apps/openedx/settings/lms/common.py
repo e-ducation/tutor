@@ -58,5 +58,8 @@ for folder in [LOG_DIR, MEDIA_ROOT, STATIC_ROOT_BASE, ORA2_FILEUPLOAD_ROOT]:
     if not os.path.exists(folder):
         os.makedirs(folder)
 
+if {{ REGISTRATION_EMAIL_PATTERNS_ALLOWED }}:
+    REGISTRATION_EMAIL_PATTERNS_ALLOWED = {{ REGISTRATION_EMAIL_PATTERNS_ALLOWED }}
+
 {{ patch("openedx-common-settings") }}
 {{ patch("openedx-lms-common-settings") }}
