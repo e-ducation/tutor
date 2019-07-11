@@ -4,11 +4,19 @@ Note: Breaking changes between versions are indicated by "💥".
 
 ## Latest
 
-- [Improvement] Rename ``SECRET_KEY`` configuration parameter to ``OPENEDX_SECRET_KEY``
-- [Improvement] Add support for TLS in external SMTP server (#231)
+- [Feature] Modify ``createuser`` commands to define a password from the command line
+- [Improvement] Better yaml value parsing from command line
+- [Feature] Add `dev exec` command
+- [Bugfix] Fix incorrect notes settings definition
+- [Improvement] Make it possible to start/stop/reboot a selection of services
+- [Improvement] Add `local/k8s reboot` commands
+- [Improvement] Add `-U/--unset` option to `config save`
+- [Bugfix] Fix insecure static asset loading when web proxy is enabled
+- [Improvement] Rename `SECRET_KEY` configuration parameter to `OPENEDX_SECRET_KEY`
+- [Improvement] Add support for SSL and TLS in external SMTP server (#231)
 - [Bugfix] Fix missing video transcripts in LMS (#229)
 - [Improvement] Make it possible to enable/disable multiple plugins at once
-- [Improvement] Add 'local-docker-compose-nginx-volumes' patch
+- [Improvement] Add a few local and k8s patches for plugins
 
 ## 3.5.3 (2019-07-05)
 

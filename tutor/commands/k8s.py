@@ -69,6 +69,13 @@ def stop(root):
     )
 
 
+@click.command(help="Reboot an existing platform")
+@opts.root
+def reboot(root):
+    stop.callback(root)
+    start.callback(root)
+
+
 def resource_selector(config, *selectors):
     """
     Convenient utility for filtering only the resources that belong to this project.
@@ -108,13 +115,20 @@ def init(root):
 @opts.root
 @click.option("--superuser", is_flag=True, help="Make superuser")
 @click.option("--staff", is_flag=True, help="Make staff user")
+@click.option(
+    "-p",
+    "--password",
+    help="Specify password from the command line. If undefined, you will be prompted to input a password",
+)
 @click.argument("name")
 @click.argument("email")
-def createuser(root, superuser, staff, name, email):
+def createuser(root, superuser, staff, password, name, email):
     config = tutor_config.load(root)
     runner = K8sScriptRunner(root, config)
     runner.check_service_is_activated("lms")
-    command = scripts.create_user_command(superuser, staff, name, email)
+    command = scripts.create_user_command(
+        superuser, staff, name, email, password=password
+    )
     kubectl_exec(config, "lms", command, attach=True)
 
 
@@ -218,6 +232,7 @@ def wait_for_pod_ready(config, service):
 k8s.add_command(quickstart)
 k8s.add_command(start)
 k8s.add_command(stop)
+k8s.add_command(reboot)
 k8s.add_command(delete)
 k8s.add_command(init)
 k8s.add_command(createuser)

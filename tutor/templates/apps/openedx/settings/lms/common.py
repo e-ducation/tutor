@@ -24,6 +24,8 @@ LOGGING["handlers"]["tracking"] = {
 }
 LOGGING["loggers"]["tracking"]["handlers"] = ["console", "local", "tracking"]
 
+EMAIL_USE_SSL = {{ SMTP_USE_SSL }}
+
 # Fix media files paths
 VIDEO_IMAGE_SETTINGS["STORAGE_KWARGS"]["location"] = MEDIA_ROOT
 VIDEO_TRANSCRIPTS_SETTINGS["STORAGE_KWARGS"]["location"] = MEDIA_ROOT
@@ -46,9 +48,10 @@ GRADES_DOWNLOAD = {
 LOCALE_PATHS.append("/openedx/locale")
 
 # JWT is authentication for other openedx services
-JWT_AUTH["ISSUER"] = "{% if ACTIVATE_HTTPS %}https{% else %}http{% endif %}://{{ LMS_HOST }}/oauth2"
-JWT_AUTH["JWT_AUDIENCE"] = "openedx"
-JWT_AUTH["SECRET_KEY"] = "{{ OPENEDX_SECRET_KEY }}"
+JWT_AUTH["JWT_ISSUER"] = "{{ JWT_COMMON_ISSUER }}"
+JWT_AUTH["JWT_AUDIENCE"] = "{{ JWT_COMMON_AUDIENCE }}"
+JWT_AUTH["JWT_SECRET_KEY"] = "{{ JWT_COMMON_SECRET_KEY }}"
+JWT_AUTH["JWT_PRIVATE_SIGNING_JWK"] = None
 
 # Create folders if necessary
 for folder in [LOG_DIR, MEDIA_ROOT, STATIC_ROOT_BASE, ORA2_FILEUPLOAD_ROOT]:

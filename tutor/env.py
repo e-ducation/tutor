@@ -1,4 +1,5 @@
 import codecs
+from copy import deepcopy
 import os
 import shutil
 
@@ -17,10 +18,11 @@ VERSION_FILENAME = "version"
 
 class Renderer:
     ENVIRONMENT = None
+    ENVIRONMENT_CONFIG = None
 
     @classmethod
     def environment(cls, config):
-        if not cls.ENVIRONMENT:
+        if cls.ENVIRONMENT_CONFIG != config:
             template_roots = [TEMPLATES_ROOT]
             for _, plugin_templates in plugins.iter_templates(config):
                 template_roots.append(plugin_templates)
@@ -33,6 +35,8 @@ class Renderer:
             environment.filters["reverse_host"] = utils.reverse_host
             environment.filters["walk_templates"] = walk_templates
             environment.globals["TUTOR_VERSION"] = __version__
+
+            cls.ENVIRONMENT_CONFIG = deepcopy(config)
             cls.ENVIRONMENT = environment
 
         return cls.ENVIRONMENT
@@ -40,6 +44,7 @@ class Renderer:
     @classmethod
     def reset(cls):
         cls.ENVIRONMENT = None
+        cls.ENVIRONMENT_CONFIG = None
 
     @classmethod
     def render_str(cls, config, text):

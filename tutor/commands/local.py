@@ -31,7 +31,7 @@ def quickstart(root, non_interactive, pullimages_):
     click.echo(fmt.title("Updating the current environment"))
     tutor_env.save(root, config)
     click.echo(fmt.title("Stopping any existing platform"))
-    stop.callback(root)
+    stop.callback(root, [])
     if pullimages_:
         click.echo(fmt.title("Docker image updates"))
         pullimages.callback(root)
@@ -40,7 +40,7 @@ def quickstart(root, non_interactive, pullimages_):
     click.echo(fmt.title("HTTPS certificates generation"))
     https_create.callback(root)
     click.echo(fmt.title("Starting the platform in detached mode"))
-    start.callback(root, True)
+    start.callback(root, True, [])
 
 
 @click.command(help="Update docker images")
@@ -50,16 +50,17 @@ def pullimages(root):
     docker_compose(root, config, "pull")
 
 
-@click.command(help="Run all configured Open edX services")
+@click.command(help="Run all or a selection of configured Open edX services")
 @opts.root
 @click.option("-d", "--detach", is_flag=True, help="Start in daemon mode")
-def start(root, detach):
+@click.argument("services", metavar="service", nargs=-1)
+def start(root, detach, services):
     command = ["up", "--remove-orphans"]
     if detach:
         command.append("-d")
 
     config = tutor_config.load(root)
-    docker_compose(root, config, *command)
+    docker_compose(root, config, *command, *services)
 
     if detach:
         fmt.echo_info("The Open edX platform is now running in detached mode")
@@ -84,15 +85,30 @@ def start(root, detach):
 
 @click.command(help="Stop a running platform")
 @opts.root
-def stop(root):
+@click.argument("services", metavar="service", nargs=-1)
+def stop(root, services):
     config = tutor_config.load(root)
-    docker_compose(root, config, "rm", "--stop", "--force")
+    docker_compose(root, config, "rm", "--stop", "--force", *services)
 
 
 @click.command(
-    help="""Restart some components from a running platform.
-You may specify 'openedx' to restart the lms, cms and workers, or 'all' to
-restart all services."""
+    short_help="Reboot an existing platform",
+    help="This is more than just a restart: with reboot, the platform is fully stopped before being restarted again",
+)
+@opts.root
+@click.option("-d", "--detach", is_flag=True, help="Start in daemon mode")
+@click.argument("services", metavar="service", nargs=-1)
+def reboot(root, detach, services):
+    stop.callback(root, services)
+    start.callback(root, detach, services)
+
+
+@click.command(
+    short_help="Restart some components from a running platform.",
+    help="""Specify 'openedx' to restart the lms, cms and workers, or 'all' to
+restart all services. Note that this performs a 'docker-compose restart', so new images
+may not be taken into account. It is useful for reloading settings, for instance. To
+fully stop the platform, use the 'reboot' command.""",
 )
 @opts.root
 @click.argument("service")
@@ -117,7 +133,7 @@ def restart(root, service):
 @click.option("--entrypoint", help="Override the entrypoint of the image")
 @click.argument("service")
 @click.argument("command", default=None, required=False)
-@click.argument("args", nargs=-1, required=False)
+@click.argument("args", nargs=-1)
 def run(root, entrypoint, service, command, args):
     run_command = ["run", "--rm"]
     if entrypoint:
@@ -138,7 +154,7 @@ def run(root, entrypoint, service, command, args):
 @opts.root
 @click.argument("service")
 @click.argument("command")
-@click.argument("args", nargs=-1, required=False)
+@click.argument("args", nargs=-1)
 def execute(root, service, command, args):
     exec_command = ["exec", service, command]
     if args:
@@ -238,7 +254,7 @@ See the official certbot documentation for your platform: https://certbot.eff.or
 @opts.root
 @click.option("-f", "--follow", is_flag=True, help="Follow log output")
 @click.option("--tail", type=int, help="Number of lines to show from each container")
-@click.argument("service", nargs=-1, required=False)
+@click.argument("service", nargs=-1)
 def logs(root, follow, tail, service):
     command = ["logs"]
     if follow:
@@ -254,13 +270,20 @@ def logs(root, follow, tail, service):
 @opts.root
 @click.option("--superuser", is_flag=True, help="Make superuser")
 @click.option("--staff", is_flag=True, help="Make staff user")
+@click.option(
+    "-p",
+    "--password",
+    help="Specify password from the command line. If undefined, you will be prompted to input a password",
+)
 @click.argument("name")
 @click.argument("email")
-def createuser(root, superuser, staff, name, email):
+def createuser(root, superuser, staff, password, name, email):
     config = tutor_config.load(root)
     runner = ScriptRunner(root, config)
     runner.check_service_is_activated("lms")
-    command = scripts.create_user_command(superuser, staff, name, email)
+    command = scripts.create_user_command(
+        superuser, staff, name, email, password=password
+    )
     runner.exec("lms", command)
 
 
@@ -336,6 +359,7 @@ local.add_command(pullimages)
 local.add_command(start)
 local.add_command(stop)
 local.add_command(restart)
+local.add_command(reboot)
 local.add_command(run)
 local.add_command(execute, name="exec")
 local.add_command(init)
