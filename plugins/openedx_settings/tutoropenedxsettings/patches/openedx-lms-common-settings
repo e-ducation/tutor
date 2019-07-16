@@ -1,0 +1,3 @@
+{% for k, v in OPENEDX_SETTINGS_LMS.items() %}
+{{ k }} = {{ v }}
+{% endfor %}
